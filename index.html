@@ -1,0 +1,1670 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sharon's Recipe Collection</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=Tenor+Sans&family=Jost:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --green: #3d6b52;
+    --green-light: #eef3f0;
+    --green-mid: #c2d4ca;
+    --cream: #faf9f6;
+    --text: #1e2a23;
+    --muted: #7a9485;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--cream);
+    color: var(--text);
+    font-family: 'Tenor Sans', sans-serif;
+    font-weight: 400;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--green);
+    color: white;
+    text-align: center;
+    padding: 56px 24px 40px;
+    position: relative;
+  }
+  header::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 1px;
+    background: rgba(255,255,255,0.4);
+    margin: 20px auto 0;
+  }
+  header h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(2.2rem, 6vw, 3.8rem);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  header p {
+    margin-top: 10px;
+    font-size: 0.78rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    opacity: 0.65;
+  }
+
+  /* SEARCH + FILTER */
+  .controls {
+    max-width: 860px;
+    margin: 36px auto 0;
+    padding: 0 20px 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+  }
+
+  .search-wrap {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+  }
+  .search-wrap svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    width: 16px;
+    height: 16px;
+  }
+  #search {
+    width: 100%;
+    padding: 11px 16px 11px 40px;
+    border: 1.5px solid var(--green-mid);
+    border-radius: 4px;
+    background: white;
+    font-family: 'Tenor Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  #search:focus { border-color: var(--green); }
+  #search::placeholder { color: var(--muted); }
+
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .filter-btn {
+    padding: 8px 16px;
+    border: 1.5px solid var(--green-mid);
+    border-radius: 4px;
+    background: white;
+    font-family: 'Tenor Sans', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--green);
+    border-color: var(--green);
+    color: white;
+  }
+
+  /* RESULTS COUNT */
+  .results-count {
+    max-width: 860px;
+    margin: 20px auto 4px;
+    padding: 0 20px;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* GRID */
+  .grid {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 20px 20px 60px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1px;
+    background: var(--green-mid);
+    border: 1px solid var(--green-mid);
+  }
+
+  /* CARD */
+  .card {
+    background: var(--cream);
+    padding: 28px 24px 24px;
+    cursor: pointer;
+    transition: background 0.15s;
+    position: relative;
+  }
+  .card:hover { background: white; }
+  .card-tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .card-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: 1.45rem;
+    line-height: 1.2;
+    color: var(--green);
+    margin-bottom: 10px;
+  }
+  .card-preview {
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .card-arrow {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    color: var(--green-mid);
+    font-size: 1rem;
+    transition: transform 0.2s, color 0.2s;
+  }
+  .card:hover .card-arrow { transform: translateX(3px); color: var(--green); }
+
+  .no-results {
+    background: var(--cream);
+    padding: 60px 24px;
+    text-align: center;
+    grid-column: 1/-1;
+    color: var(--muted);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    font-style: italic;
+  }
+
+  /* MODAL */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(30,42,35,0.55);
+    z-index: 100;
+    backdrop-filter: blur(2px);
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .overlay.open { display: flex; }
+
+  .modal {
+    background: var(--cream);
+    max-width: 600px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    border-top: 4px solid var(--green);
+    position: relative;
+    animation: slideUp 0.25s ease;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .modal-header {
+    padding: 32px 32px 20px;
+    border-bottom: 1px solid var(--green-mid);
+  }
+  .modal-tag {
+    font-size: 0.65rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .modal-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 400;
+    font-size: clamp(1.8rem, 5vw, 2.5rem);
+    color: var(--green);
+    line-height: 1.1;
+  }
+
+  .modal-body { padding: 24px 32px 36px; }
+
+  .section-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--green);
+    font-weight: 500;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--green-mid);
+  }
+
+  .ingredients-list {
+    list-style: none;
+    margin-bottom: 28px;
+  }
+  .ingredients-list li {
+    font-size: 0.85rem;
+    padding: 5px 0;
+    border-bottom: 1px solid var(--green-light);
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    line-height: 1.5;
+  }
+  .ingredients-list li::before {
+    content: '—';
+    color: var(--green-mid);
+    font-size: 0.7rem;
+    flex-shrink: 0;
+  }
+
+  .ingredient-group-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin: 14px 0 6px;
+    font-weight: 500;
+  }
+
+  .instructions-list {
+    list-style: none;
+    counter-reset: steps;
+  }
+  .instructions-list li {
+    counter-increment: steps;
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    font-size: 0.87rem;
+    line-height: 1.65;
+  }
+  .instructions-list li::before {
+    content: counter(steps);
+    background: var(--green);
+    color: white;
+    font-size: 0.65rem;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 2px;
+    font-family: 'Tenor Sans', sans-serif;
+    font-weight: 500;
+  }
+
+  .modal-note {
+    margin-top: 20px;
+    padding: 14px 16px;
+    background: var(--green-light);
+    border-left: 2px solid var(--green);
+    font-size: 0.8rem;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+  .modal-note a { color: var(--green); }
+
+  .close-btn {
+    position: absolute;
+    top: 16px;
+    right: 18px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    padding: 4px 8px;
+    transition: color 0.2s;
+  }
+  .close-btn:hover { color: var(--green); }
+
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--green-mid);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Sharon's Recipe Collection</h1>
+  <p>Home cooking · Asian & More</p>
+</header>
+
+<div class="controls">
+  <div class="search-wrap">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="search" placeholder="Search recipes or ingredients…">
+  </div>
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">All</button>
+    <button class="filter-btn" data-filter="Korean">Korean</button>
+    <button class="filter-btn" data-filter="Chinese">Chinese</button>
+    <button class="filter-btn" data-filter="Vietnamese">Vietnamese</button>
+    <button class="filter-btn" data-filter="Other">Other</button>
+  </div>
+</div>
+
+<div class="results-count" id="resultsCount"></div>
+
+<div class="grid" id="grid"></div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal">
+    <button class="close-btn" id="closeBtn">✕</button>
+    <div class="modal-header">
+      <div class="modal-tag" id="modalTag"></div>
+      <div class="modal-title" id="modalTitle"></div>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<footer>Made with love · Updated anytime</footer>
+
+<script>
+const recipes = [
+  {
+    id: 1,
+    title: "Lu Rou Fan",
+    tag: "Chinese · Serves ~6",
+    category: "Chinese",
+    preview: "Braised pork belly with shiitake mushrooms over rice",
+    ingredientGroups: [
+      { label: null, items: [
+        "1 cup sliced shallots",
+        "1 lb pork belly",
+        "8–10 shiitake mushrooms",
+        "⅓ cup minced garlic",
+        "⅙ cup cooking wine",
+        "⅙ cup rock candy",
+        "⅔ cup soy sauce",
+        "⅙ cup rice wine",
+        "2 cups of water",
+        "Boiled eggs (optional)"
+      ]}
+    ],
+    steps: [
+      "Deep fry shallots until yellow and then add in garlic, then drain.",
+      "In hot wok add cold oil.",
+      "Toss in pork belly and toss until light brown with a little crisp.",
+      "Add mushrooms and toss.",
+      "Add in cooking wine, rock candy, soy sauce, rice wine and water.",
+      "Add boiled cooked eggs (optional), shallots and garlic.",
+      "Let simmer for 45 mins – 1 hour and then serve."
+    ]
+  },
+  {
+    id: 2,
+    title: "Budae Jjigae",
+    tag: "Korean · Army Stew",
+    category: "Korean",
+    preview: "Korean army stew with spam, hot dogs, ramen and kimchi",
+    ingredientGroups: [
+      { label: "Toppings", items: [
+        "½ can spam, sliced",
+        "3 hot dogs, sliced",
+        "½ pack enoki mushrooms",
+        "½ pack firm tofu, sliced",
+        "1 cup rice cakes",
+        "1 pack ramen",
+        "½ bunch watercress",
+        "½ cup kimchi",
+        "(optional) ½ can baked beans"
+      ]},
+      { label: "Sauce", items: [
+        "1 tbsp gochugaru",
+        "2 tbsp rice wine",
+        "2 tbsp soy sauce",
+        "½ tbsp garlic powder",
+        "½ tbsp sugar",
+        "1 tbsp gochujang",
+        "Few sprinkles ground black pepper",
+        "1 tbsp chicken bouillon"
+      ]}
+    ],
+    steps: [
+      "Cut spam, hot dog and tofu into slices and place into deep pan or wok along with washed enoki mushrooms, kimchi and beans.",
+      "Mix together the sauce ingredients and drizzle it over the ingredients in the wok.",
+      "Bring to boil and let boil for around 7 minutes.",
+      "Add in rice cakes and the ramen and cover and boil for another 3 minutes.",
+      "Add in watercress, egg (optional) and cheese (optional) and boil for another 2 mins."
+    ]
+  },
+  {
+    id: 3,
+    title: "Nuoc Mam",
+    tag: "Vietnamese · Dipping Sauce",
+    category: "Vietnamese",
+    preview: "Classic Vietnamese fish sauce dipping sauce",
+    ingredientGroups: [
+      { label: null, items: [
+        "1 cup granulated sugar",
+        "1 cup boiling water",
+        "10 birds eye chili",
+        "2 tbsp minced garlic",
+        "¾ cup fish sauce",
+        "½ cup lime juice (or 4 small limes)"
+      ]}
+    ],
+    steps: [
+      "Boil about 1¼ cup water in a kettle.",
+      "Add sugar, garlic and chopped up chili to a big bowl.",
+      "Pour boiling water into the bowl and mix until sugar is dissolved.",
+      "Mix in fish sauce.",
+      "Mix in lime juice."
+    ]
+  },
+  {
+    id: 4,
+    title: "Soondubu",
+    tag: "Korean · Soft Tofu Stew",
+    category: "Korean",
+    preview: "Spicy soft tofu stew with enoki mushrooms",
+    ingredientGroups: [
+      { label: null, items: [
+        "1 tablespoon garlic",
+        "1 tablespoon green onions",
+        "½ cup onions",
+        "1 tablespoon gochugaru",
+        "2 tablespoon soy sauce",
+        "2 tablespoon oyster sauce",
+        "2 teaspoon sugar",
+        "1 tablespoon chicken bouillon",
+        "Enoki mushrooms",
+        "Soft tofu",
+        "Meat of choice"
+      ]}
+    ],
+    steps: [
+      "Add a bit of oil into the pot.",
+      "Stir fry the garlic, onions and green onions for 2–3 mins.",
+      "Add in gochugaru, soy sauce, oyster sauce, sugar and chicken bouillon.",
+      "Add water and bring to boil.",
+      "Add in enoki mushroom, tofu and any meat of choice, let boil for 3–5 minutes."
+    ]
+  },
+  {
+    id: 5,
+    title: "Bossam",
+    tag: "Korean · Boiled Pork",
+    category: "Korean",
+    preview: "Tender boiled pork belly with aromatics",
+    ingredientGroups: [
+      { label: null, items: [
+        "2 tbsp doenjang",
+        "1–2 stalks green onion",
+        "5 cloves garlic",
+        "3–4 slices ginger",
+        "½ onion",
+        "2 bay leaves",
+        "1 tsp dark soy sauce",
+        "A sprinkle of pepper",
+        "1 tbsp coffee",
+        "1 tbsp mirin",
+        "Pork belly"
+      ]}
+    ],
+    steps: [
+      "Put all the ingredients into a big pot with water and bring to a boil.",
+      "Add in pork belly and let boil for an hour.",
+      "Slice up and serve."
+    ]
+  },
+  {
+    id: 6,
+    title: "Mayak Eggs",
+    tag: "Korean · Marinated Eggs",
+    category: "Korean",
+    preview: "Addictive soy-marinated soft boiled eggs",
+    ingredientGroups: [
+      { label: null, items: [
+        "½ cup soy sauce",
+        "½ cup water",
+        "6 tbsp sugar",
+        "1 tbsp onions",
+        "3 chili peppers",
+        "2 tbsp garlic",
+        "½ stalk green onions",
+        "Dash of sesame oil (optional)",
+        "6–8 eggs"
+      ]}
+    ],
+    steps: [
+      "Add all marinade ingredients to a container and mix until the sugar is dissolved.",
+      "Bring water up to a boil and add in eggs, let boil for 8 mins.",
+      "Immediately put eggs into an ice bath.",
+      "Peel and add eggs into marinade container.",
+      "Cover with paper towel to soak entire egg."
+    ]
+  },
+  {
+    id: 7,
+    title: "Mapo Tofu",
+    tag: "Chinese · Sichuan",
+    category: "Chinese",
+    preview: "Silken tofu in a numbing, spicy Sichuan sauce",
+    ingredientGroups: [
+      { label: null, items: [
+        "½ lbs ground beef/pork",
+        "1 inch knob ginger, minced",
+        "4 cloves garlic, minced",
+        "2 scallions (white portion sliced; green for garnish)",
+        "2 tbsp doubanjiang",
+        "1–2 tsp Sichuan peppercorn powder",
+        "2 tbsp shaoxing wine",
+        "1 tsp soy sauce",
+        "2 tsp sugar",
+        "½ tsp white pepper",
+        "⅔ cup chicken/beef stock",
+        "1 lb soft/silken tofu",
+        "2 tsp cornstarch + 3 tbsp water"
+      ]}
+    ],
+    steps: [
+      "Stir fry meat in pan for a few minutes.",
+      "Add in ginger, garlic, scallion, doubanjiang, Sichuan peppercorn powder, shaoxing wine, soy sauce, sugar and white pepper.",
+      "Add in chicken stock, bring to a boil.",
+      "Add in silken tofu, let boil for 2–3 mins.",
+      "Add in cornstarch slurry and stir."
+    ]
+  },
+  {
+    id: 8,
+    title: "Beef & Broccoli",
+    tag: "Chinese · Stir Fry",
+    category: "Chinese",
+    preview: "Classic wok stir fry with marinated beef and broccoli",
+    ingredientGroups: [
+      { label: "Beef Marinade", items: [
+        "1–2 lbs beef, sliced",
+        "1 tsp soy sauce",
+        "1 tsp shaoxing wine",
+        "1 tsp corn starch",
+        "¼ tsp baking soda",
+        "⅛ tsp black pepper"
+      ]},
+      { label: "Sauce", items: [
+        "1 tbsp soy sauce",
+        "1 tbsp oyster sauce",
+        "1½ tsp sugar",
+        "1 tbsp shaoxing wine",
+        "1 tsp corn starch",
+        "⅛ tsp black pepper"
+      ]},
+      { label: "Other", items: [
+        "1 tablespoon garlic",
+        "3–5 cups broccoli"
+      ]}
+    ],
+    steps: [
+      "Slice up beef and marinate with marinade ingredients above.",
+      "Cut up broccoli.",
+      "Mix together the sauce.",
+      "Chop garlic.",
+      "Boil broccoli for 2–3 mins.",
+      "Heat up wok, add oil along with garlic and green onions.",
+      "Stir fry the beef for 3–5 minutes.",
+      "Add in the broccoli.",
+      "Add in the sauce.",
+      "Stir fry for a few minutes."
+    ]
+  },
+  {
+    id: 9,
+    title: "Doengjang Jjigae",
+    tag: "Korean · Fermented Soybean Stew",
+    category: "Korean",
+    preview: "Savory Korean soybean paste stew with zucchini and tofu",
+    ingredientGroups: [
+      { label: null, items: [
+        "2 cups of water",
+        "Meat of choice",
+        "1 zucchini",
+        "4 tbsp doenjang",
+        "1 tsp gochujang",
+        "1 tbsp gochugaru",
+        "½ tofu pack",
+        "½ cup mushrooms",
+        "Rice cakes (optional)"
+      ]}
+    ],
+    steps: [
+      "Cook meat and set aside.",
+      "Bring water to a boil.",
+      "Add in all the sauces and spices.",
+      "Add in zucchini and let boil for 2–4 mins.",
+      "Add in tofu and mushroom (rice cake) and let boil for 2–3 mins.",
+      "Add meat back in for 1 min and serve."
+    ]
+  },
+  {
+    id: 10,
+    title: "Pasta Sauce",
+    tag: "Other · Italian-ish",
+    category: "Other",
+    preview: "Creamy blended tomato sauce with cream cheese",
+    ingredientGroups: [
+      { label: null, items: [
+        "4 cloves of garlic",
+        "¼ onion",
+        "½ cup of tomatoes",
+        "5 sun dried tomatoes",
+        "Pinch of salt & pepper",
+        "1 tbsp Italian seasoning",
+        "2 tbsp lowfat cream cheese",
+        "¼ cup milk",
+        "½ cup pasta water"
+      ]}
+    ],
+    steps: [
+      "Add garlic, onion, tomatoes and sundried tomatoes in a pan to slightly char and soften.",
+      "Add in the seasonings and mix for 1 minute.",
+      "Add ingredients to a blender.",
+      "Add in cream cheese, milk and pasta water.",
+      "Blend mixture and then add back into the pan to heat up and mix in pasta."
+    ]
+  },
+  {
+    id: 11,
+    title: "Spare Ribs",
+    tag: "Chinese · Braised",
+    category: "Chinese",
+    preview: "Sticky-glazed Chinese spare ribs with black vinegar",
+    ingredientGroups: [
+      { label: null, items: [
+        "1 lb pork ribs",
+        "⅓ cup rock sugar",
+        "¼ cup cooking wine",
+        "3 stalks of green onion",
+        "¼ cup sliced ginger",
+        "½ tsp salt",
+        "1 tsp light soy sauce",
+        "⅙ cup sweet black rice vinegar",
+        "⅓ cup water",
+        "⅓ tsp sesame oil"
+      ]}
+    ],
+    steps: [
+      "Par boil ribs until mostly cooked.",
+      "Fry the ribs until slightly brown.",
+      "Add oil into pan with low heat.",
+      "Pour half the rock sugar and stir continuously until sugar is melted.",
+      "Put ribs back in and stir until coated evenly.",
+      "Add cooking wine and stir.",
+      "Add green onion, sliced ginger, rest of rock sugar, salt, light soy sauce, sweet black vinegar and water.",
+      "Bring to a boil and let simmer for 30 mins.",
+      "Drizzle in ⅓ tsp sesame oil."
+    ]
+  },
+  {
+    id: 12,
+    title: "Garlic Chili Noodles",
+    tag: "Chinese · Noodles · Serves 4",
+    category: "Chinese",
+    preview: "Quick stir-fried noodles with garlic, sesame and chili oil",
+    ingredientGroups: [
+      { label: null, items: [
+        "5 cloves of garlic, minced",
+        "¼ onion",
+        "1 tsp sesame oil",
+        "1 tbsp soy sauce",
+        "1 tsp black rice vinegar",
+        "1–2 tbsp chili oil",
+        "Pinch of sugar",
+        "Noodles of choice",
+        "Veggies of choice"
+      ]}
+    ],
+    steps: [
+      "Boil noodles until cooked and set aside.",
+      "Fry garlic and onion in a pan until softened.",
+      "Add in sesame oil, soy sauce, vinegar and chili oil and a pinch of sugar.",
+      "Add noodles back in and mix."
+    ]
+  },
+  {
+    id: 13,
+    title: "Chili Peanut Noodles",
+    tag: "Chinese · Noodles",
+    category: "Chinese",
+    preview: "Sesame and peanut noodles with a kick of chili",
+    ingredientGroups: [
+      { label: null, items: [
+        "1 tbsp sesame paste",
+        "1 tbsp peanut butter",
+        "1 tbsp soy sauce",
+        "1 tsp sugar",
+        "1 tsp sesame oil",
+        "1 tbsp water",
+        "1 tbsp chili oil",
+        "2 packets of knife cut noodles"
+      ]}
+    ],
+    steps: [
+      "Boil noodles until cooked and set aside.",
+      "Mix together the sauce above until completely combined.",
+      "Mix in noodles and serve."
+    ]
+  },
+  {
+    id: 14,
+    title: "Steamed Fish",
+    tag: "Chinese · Seafood",
+    category: "Chinese",
+    preview: "Classic Cantonese steamed fish with ginger and scallion",
+    ingredientGroups: [
+      { label: null, items: [
+        "1 whole fish or fillet",
+        "3–5 slices of ginger",
+        "Pinch of salt",
+        "1 tbsp cooking wine",
+        "¼ cup scallions",
+        "1 tbsp fish soy sauce",
+        "Neutral oil"
+      ]}
+    ],
+    steps: [
+      "If it's a whole or fillet of fish, cut a few slits.",
+      "Add ginger, salt and wine on top of it.",
+      "Steam until cooked.",
+      "Heat up oil.",
+      "Add scallion on top of fish.",
+      "Add fish soy sauce.",
+      "Pour hot oil over the scallions."
+    ]
+  },
+  {
+    id: 15,
+    title: "Kongnamul Bulgogi",
+    tag: "Korean · One Pot",
+    category: "Korean",
+    preview: "Spicy beef and bean sprout one-pot dish",
+    ingredientGroups: [
+      { label: "Main", items: [
+        "1 lb thinly sliced beef",
+        "1 small onion, sliced",
+        "1 cup king mushrooms, sliced",
+        "1 jalapeño, sliced",
+        "1 lb mung beans / bean sprouts",
+        "Sesame oil, for finishing"
+      ]},
+      { label: "Sauce", items: [
+        "3 tbsp low sodium soy sauce",
+        "3 tbsp gochujang",
+        "2 tbsp gochugaru",
+        "2 tbsp sweetener of choice",
+        "2 tbsp mirin",
+        "2 tbsp minced garlic",
+        "3 tbsp beef/chicken broth"
+      ]}
+    ],
+    steps: [
+      "Mix all sauce ingredients together.",
+      "Prep all of your veggies.",
+      "In a shallow pan or wok, add all your veggies starting with onions as the base and bean sprouts right on top. Thinly sliced beef on the very top, then pour sauce over everything.",
+      "Turn on heat and allow to cook untouched for ~5 minutes before giving it a mix.",
+      "Mix every so often and cook until veggies are cooked to your desired doneness.",
+      "Drizzle sesame oil before serving."
+    ]
+  },
+  {
+    id: 16,
+    title: "Beef Pho",
+    tag: "Vietnamese · Soup",
+    category: "Vietnamese",
+    preview: "Rich, slow-simmered Vietnamese beef noodle soup",
+    ingredientGroups: [
+      { label: "Broth", items: [
+        "2 pieces ginger (3-inch), halved lengthwise",
+        "2 onions, peeled",
+        "5 lbs beef marrow or knuckle bones",
+        "2 lbs beef chuck (2 pieces)",
+        "2 scallions (4-inch lengths)",
+        "⅓ cup fish sauce",
+        "2½ oz rock sugar (or 2½ tbsp granulated)",
+        "8 star anise",
+        "6 cloves",
+        "1 cinnamon stick",
+        "2 tsp fennel seeds",
+        "2 tsp coriander seeds",
+        "1 tbsp salt"
+      ]},
+      { label: "Serving", items: [
+        "1 lb dried pho noodles",
+        "⅓ lb fatty beef (sirloin), thinly sliced"
+      ]},
+      { label: "Garnishes", items: [
+        "Thinly sliced onion",
+        "Chopped scallions",
+        "Cilantro",
+        "Mung bean sprouts",
+        "Thai basil",
+        "Lime wedges"
+      ]}
+    ],
+    steps: [
+      "Place bones and beef chuck in a large stockpot, cover with water. Bring to a boil for 5 minutes then drain. Clean the pot.",
+      "Char ginger and onions directly over flame or under broiler until fragrant.",
+      "Add 5 quarts fresh water to pot and bring to a boil.",
+      "Add bones, meat, charred ginger and onions, scallions, fish sauce and sugar. Reduce to low and simmer ~40 mins, skimming often.",
+      "Remove one piece of chuck into ice water to stop cooking; refrigerate for serving later. Leave the other piece in the pot.",
+      "Toast all spices in a dry pan for ~3 mins until fragrant. Tie in cheesecloth and add to broth.",
+      "Cover and simmer for another 4 hours. Add salt and adjust seasoning with fish sauce and sugar.",
+      "To serve: boil noodles per package. Add to bowl. Place sliced chuck and raw sirloin on top. Ladle boiling broth to cook the beef. Add garnishes and lots of lime juice."
+    ]
+  },
+  {
+    id: 17,
+    title: "Lion's Head Meatball Soup",
+    tag: "Chinese · Soup",
+    category: "Chinese",
+    preview: "Pork meatballs with Napa cabbage and vermicelli",
+    ingredientGroups: [
+      { label: "Meatballs", items: [
+        "½ lb ground pork",
+        "½ cup lotus roots, diced",
+        "1 tbsp ginger, grated",
+        "⅓ tsp salt",
+        "⅕ tsp sugar",
+        "¼ tsp white pepper",
+        "½ tbsp sesame oil",
+        "½ tbsp cooking wine",
+        "½ tbsp soy sauce",
+        "1 tsp corn starch",
+        "A little oil and water"
+      ]},
+      { label: "Soup", items: [
+        "½ head Napa cabbage, cut up",
+        "Vermicelli (soaked in warm water)",
+        "Shiitake mushrooms",
+        "Shrimp (optional)",
+        "Salt and white pepper to taste",
+        "Pickled radish (optional)",
+        "Ramen seasoning (optional)"
+      ]}
+    ],
+    steps: [
+      "Dice lotus roots, grate ginger, rinse and cut Napa cabbage, soak vermicelli in warm water.",
+      "Mix pork with water squeezed from grated ginger, salt, sugar, white pepper, sesame oil, cooking wine, soy sauce, corn starch, a little oil and water. Add lotus roots.",
+      "Use a tablespoon to form meatballs and steam them.",
+      "Bring water to a boil, add vermicelli, then meatballs, then shiitake mushrooms, then Napa cabbage.",
+      "Add shrimp if desired. Season with salt, white pepper, pickled radish and ramen seasoning to taste."
+    ]
+  },
+  {
+    id: 18,
+    title: "Biang Biang Noodles",
+    tag: "Chinese · Noodles",
+    category: "Chinese",
+    preview: "Hand-pulled noodles with a garlicky chili oil dressing",
+    ingredientGroups: [
+      { label: null, items: [
+        "Wide hand-pulled noodles",
+        "2 tbsp minced garlic",
+        "2 tbsp minced green onions",
+        "2 tsp salt",
+        "2 tbsp chili flakes",
+        "2 tbsp cooking oil (warmed)",
+        "2 tsp sweet black rice vinegar",
+        "1 tbsp soy sauce"
+      ]}
+    ],
+    steps: [
+      "Boil noodles until cooked.",
+      "In a bowl combine garlic, green onions, salt and chili flakes.",
+      "Pour warm cooking oil over the mixture.",
+      "Add sweet black rice vinegar and soy sauce.",
+      "Add noodles and mix everything together."
+    ]
+  },
+  {
+    id: 19,
+    title: "Chicken Manchurian",
+    tag: "Other · Indo-Chinese",
+    category: "Other",
+    preview: "Crispy air-fried chicken in a savory-sweet glaze",
+    ingredientGroups: [
+      { label: "Chicken", items: [
+        "10 oz chicken, cut into pieces",
+        "Pinch of salt",
+        "2 egg whites",
+        "2 tbsp corn starch"
+      ]},
+      { label: "Sauce", items: [
+        "1 tbsp minced garlic",
+        "2 oz onion, chopped",
+        "Bell pepper, chopped",
+        "Carrot, chopped",
+        "1 tbsp soy sauce",
+        "½ tbsp oyster sauce",
+        "½ tbsp vinegar",
+        "2 tsp rock sugar",
+        "1 tbsp water",
+        "2 tsp cornstarch + water (slurry)"
+      ]}
+    ],
+    steps: [
+      "Combine chicken with salt, egg whites and corn starch. Air fry until cooked.",
+      "Chop bell pepper, carrot and onion. Mince garlic.",
+      "Medium high heat, add 1 tbsp oil, minced garlic and onion. Cook until fragrant.",
+      "Add in bell peppers, soy sauce, oyster sauce, vinegar, rock sugar and water. Stir and cook a few minutes.",
+      "Add cornstarch slurry to thicken the sauce.",
+      "Add chicken and mix until all pieces are well glazed."
+    ]
+  },
+  {
+    id: 20,
+    title: "Fried Rice Cake",
+    tag: "Korean · Street Food",
+    category: "Korean",
+    preview: "Pan-fried rice cakes with Korean ketchup & mustard dips",
+    ingredientGroups: [
+      { label: "Mustard Sauce", items: [
+        "2 tbsp mayo",
+        "1 tbsp mustard",
+        "1 tbsp sugar"
+      ]},
+      { label: "Korean Ketchup Sauce", items: [
+        "2 tbsp gochujang",
+        "2 tbsp ketchup",
+        "2 tsp sugar",
+        "2 tbsp water",
+        "1 tsp sesame oil",
+        "Sesame seeds"
+      ]},
+      { label: "Other", items: [
+        "Rice cakes",
+        "Hot dogs"
+      ]}
+    ],
+    steps: [
+      "Mix mustard sauce ingredients together.",
+      "Mix Korean ketchup sauce ingredients together.",
+      "Boil rice cakes until softened, then put on skewers and fry in pan.",
+      "Fry some hot dogs in the pan.",
+      "Drizzle both sauces over the rice cakes and serve."
+    ]
+  },
+  {
+    id: 21,
+    title: "Braised Beef",
+    tag: "Chinese · Pressure Cooker",
+    category: "Chinese",
+    preview: "Tender oxtail and radish braised with aromatics",
+    ingredientGroups: [
+      { label: null, items: [
+        "2 lb oxtail",
+        "1.8 lb radish, cubed",
+        "Ginger slices",
+        "⅓ cup garlic",
+        "1 stalk green onion",
+        "3 star anise",
+        "1 cinnamon stick",
+        "1 tbsp rock sugar",
+        "Salt to taste",
+        "Five spice powder to taste",
+        "¼ cup soy sauce",
+        "1 tbsp oyster sauce",
+        "¼ cup white wine",
+        "3 cups water"
+      ]}
+    ],
+    steps: [
+      "Cube radish, prep oxtail.",
+      "Put oxtail at the bottom of pot, put radish on top.",
+      "Add ginger, garlic, green onion, star anise, cinnamon, rock sugar, salt, five spice, soy sauce, oyster sauce, white wine and water.",
+      "Pressure cook until tender."
+    ]
+  },
+  {
+    id: 22,
+    title: "Tomato & Egg Soup",
+    tag: "Chinese · Soup",
+    category: "Chinese",
+    preview: "Simple comforting tomato and egg drop soup",
+    ingredientGroups: [
+      { label: null, items: [
+        "2–3 tomatoes, sliced",
+        "1 tsp salt",
+        "1 cup water",
+        "1 egg",
+        "A little white vinegar",
+        "Scallions"
+      ]}
+    ],
+    steps: [
+      "Cut up tomatoes into slices.",
+      "Heat up wok with oil (medium heat), add tomatoes and 1 tsp salt.",
+      "Let tomatoes soften until almost soupy, then add a cup of water.",
+      "Beat an egg with a little white vinegar.",
+      "Spread egg into the soup in a slow stream.",
+      "Add scallions and serve."
+    ]
+  },
+  {
+    id: 23,
+    title: "Sauce for Rice Cooker Rice",
+    tag: "Chinese · Sauce",
+    category: "Chinese",
+    preview: "Simple garlic soy sauce to drizzle over fried rice",
+    ingredientGroups: [
+      { label: "Sauce", items: [
+        "Cooking oil",
+        "2 tbsp water",
+        "2 tsp soy sauce",
+        "½ tsp oyster sauce",
+        "1 tsp sugar",
+        "A dash of white vinegar",
+        "Some garlic, minced",
+        "Green onions"
+      ]},
+      { label: "Fried Rice", items: [
+        "3 cups rice",
+        "Corn",
+        "Peas",
+        "Hot dog",
+        "Pepperoni"
+      ]}
+    ],
+    steps: [
+      "Heat oil in a small pan.",
+      "Add garlic and cook briefly.",
+      "Add water, soy sauce, oyster sauce, sugar and white vinegar.",
+      "Stir and heat through.",
+      "Add green onions.",
+      "Pour over fried rice and serve."
+    ]
+  },
+  {
+    id: 24,
+    title: "Tofu Puffs",
+    tag: "Chinese · Stuffed",
+    category: "Chinese",
+    preview: "Tofu puffs stuffed with pork, mushroom and pickled radish",
+    ingredientGroups: [
+      { label: null, items: [
+        "Tofu puffs",
+        "Pork, diced",
+        "Mushroom, diced",
+        "Scallion, diced",
+        "Pickled radish, diced",
+        "Cooking wine",
+        "Soy sauce",
+        "Salt",
+        "A bit of corn starch"
+      ]}
+    ],
+    steps: [
+      "Dice pork, mushroom, scallion and pickled radish. Mix with cooking wine, soy sauce, salt and corn starch.",
+      "Stuff mixture into tofu puffs.",
+      "Wok on low heat, place puffs in and flip when golden yellow.",
+      "Add a bit of soy sauce and cooking wine, then hot water to cover most of the puffs.",
+      "Cover with lid until water decreases and serve."
+    ]
+  },
+  {
+    id: 25,
+    title: "Egg Soup",
+    tag: "Chinese · Steamed",
+    category: "Chinese",
+    preview: "Silky steamed egg custard with shrimp",
+    ingredientGroups: [
+      { label: null, items: [
+        "3 eggs",
+        "Pinch of salt",
+        "Small shrimps",
+        "Water",
+        "Soy sauce (for finishing)"
+      ]}
+    ],
+    steps: [
+      "Beat 3 eggs, add a pinch of salt, add small shrimps, add water.",
+      "Steam in pot until set.",
+      "Drizzle soy sauce on top and serve."
+    ]
+  },
+  {
+    id: 26,
+    title: "Watercress & Spinach",
+    tag: "Chinese · Vegetables",
+    category: "Chinese",
+    preview: "Quick stir-fried greens with oyster sauce",
+    ingredientGroups: [
+      { label: "Sauce", items: [
+        "1 tbsp rice wine",
+        "2 tsp oyster sauce",
+        "¼ tsp sugar",
+        "⅛ tsp salt"
+      ]},
+      { label: "Other", items: [
+        "2 cloves garlic, chopped",
+        "Watercress",
+        "Spinach",
+        "Oil"
+      ]}
+    ],
+    steps: [
+      "Mix sauce ingredients together.",
+      "Heat wok and add oil to pan, add garlic and stir fry for 10 seconds.",
+      "Add watercress and spinach and stir fry for a minute.",
+      "Add sauce and stir.",
+      "Stir fry for another 1–2 minutes, drizzle oil and serve."
+    ]
+  },
+  {
+    id: 27,
+    title: "Lotus Roots",
+    tag: "Chinese · Vegetables",
+    category: "Chinese",
+    preview: "Stir-fried lotus root slices with pork and scallion",
+    ingredientGroups: [
+      { label: null, items: [
+        "Lotus roots, peeled and sliced",
+        "A little meat (optional)",
+        "Salt",
+        "Sugar",
+        "Cooking wine",
+        "Water",
+        "Scallion"
+      ]}
+    ],
+    steps: [
+      "Peel and slice lotus roots, then cut in half.",
+      "Add oil and some meat to pan, then add lotus roots and toss.",
+      "Add salt, sugar and some cooking wine.",
+      "Add water and let simmer.",
+      "Add scallion and serve."
+    ]
+  },
+  {
+    id: 28,
+    title: "Stir Fry Potato",
+    tag: "Chinese · Vegetables",
+    category: "Chinese",
+    preview: "Thin-cut potato strands stir fried with garlic",
+    ingredientGroups: [
+      { label: null, items: [
+        "Potatoes, cut into strands",
+        "Green pepper",
+        "Minced garlic",
+        "White pepper",
+        "Salt",
+        "Cooking wine",
+        "A bit of soy sauce",
+        "A pinch of red pepper"
+      ]}
+    ],
+    steps: [
+      "Cut potatoes into thin strands and cut up green pepper.",
+      "Add oil to pan, add garlic.",
+      "Add potatoes and stir fry.",
+      "Add white pepper, salt, cooking wine, a bit of soy sauce and a pinch of red pepper.",
+      "Stir fry until cooked and serve."
+    ]
+  },
+  {
+    id: 29,
+    title: "WenZhou Noodles",
+    tag: "Chinese · Noodles",
+    category: "Chinese",
+    preview: "Soup noodles with pork, shrimp and mushroom",
+    ingredientGroups: [
+      { label: null, items: [
+        "WenZhou noodles",
+        "Soy sauce pork (sliced)",
+        "Mushrooms",
+        "Shrimp",
+        "Lettuce",
+        "Salt",
+        "Soy sauce",
+        "Cooking wine"
+      ]}
+    ],
+    steps: [
+      "Boil the noodles, keep mixing and adding cold water until noodles break cleanly between chopsticks. Wash with cold water.",
+      "Add soy sauce pork, mushroom, shrimp and lettuce to pot.",
+      "Add salt, soy sauce, cooking wine and water for soup.",
+      "Add noodles and serve."
+    ]
+  },
+  {
+    id: 30,
+    title: "Snow Peas",
+    tag: "Chinese · Vegetables",
+    category: "Chinese",
+    preview: "Stir-fried snow peas with pickled lettuce",
+    ingredientGroups: [
+      { label: null, items: [
+        "Snow peas, de-veined",
+        "Pickled lettuce, sliced",
+        "Garlic",
+        "Oil",
+        "Salt",
+        "Cooking wine",
+        "A little water"
+      ]}
+    ],
+    steps: [
+      "De-vein the snow peas.",
+      "Wash pickled lettuce and cut into small pieces.",
+      "Add oil and garlic to pan.",
+      "Add snow peas, a little salt and a little cooking wine — mix.",
+      "Add pickled lettuce, add a little water and mix."
+    ]
+  },
+  {
+    id: 31,
+    title: "Steamed Greens",
+    tag: "Chinese · Vegetables",
+    category: "Chinese",
+    preview: "Blanched greens with a hot oil garlic sauce",
+    ingredientGroups: [
+      { label: null, items: [
+        "Greens of choice",
+        "Soy sauce",
+        "Doubanjiang",
+        "Oyster sauce",
+        "Garlic, minced",
+        "Hot oil"
+      ]}
+    ],
+    steps: [
+      "Mix soy sauce, doubanjiang, oyster sauce and garlic into a sauce.",
+      "Heat up oil until very hot.",
+      "Pour hot oil into the sauce.",
+      "Blanch or steam greens and drizzle sauce over top."
+    ]
+  },
+  {
+    id: 32,
+    title: "Stir Fry Cabbage",
+    tag: "Chinese · Vegetables",
+    category: "Chinese",
+    preview: "Simple stir-fried cabbage or lettuce with oyster sauce",
+    ingredientGroups: [
+      { label: null, items: [
+        "Cabbage or lettuce",
+        "Black pepper",
+        "Soy sauce",
+        "Oyster sauce",
+        "Garlic",
+        "Sesame oil",
+        "Sugar",
+        "Salt"
+      ]}
+    ],
+    steps: [
+      "Heat oil in wok and add garlic.",
+      "Add cabbage or lettuce and stir fry.",
+      "Add black pepper, soy sauce, oyster sauce, sesame oil, sugar and salt.",
+      "Stir fry until done and serve."
+    ]
+  },
+  {
+    id: 33,
+    title: "Fried Egg Dish",
+    tag: "Chinese · Eggs",
+    category: "Chinese",
+    preview: "Fluffy wok-fried eggs with tiny shrimp",
+    ingredientGroups: [
+      { label: null, items: [
+        "3 eggs",
+        "Tiny shrimp",
+        "A bit of salt",
+        "A little water",
+        "1 tbsp cooking wine",
+        "1 tbsp soy sauce"
+      ]}
+    ],
+    steps: [
+      "Beat 3 eggs with tiny shrimp, a bit of salt and a little water.",
+      "Heat up wok over medium heat with oil.",
+      "Mix cooking wine and soy sauce in a small bowl.",
+      "Add egg mixture to wok, pour the wine and soy sauce on top while frying."
+    ]
+  },
+  {
+    id: 34,
+    title: "Pan Fried Zucchini Pancakes",
+    tag: "Chinese · Snack",
+    category: "Chinese",
+    preview: "Crispy shrimp and zucchini pancakes",
+    ingredientGroups: [
+      { label: null, items: [
+        "Zucchini, grated and seasoned with salt",
+        "7 shrimps, minced",
+        "1 egg, beaten",
+        "Cornstarch",
+        "Salt and pepper"
+      ]}
+    ],
+    steps: [
+      "Grate zucchini and season with salt, let sit to draw out moisture.",
+      "Mince 7 shrimps.",
+      "Beat an egg and add cornstarch, salt and pepper to the zucchini and shrimps.",
+      "Form into balls / patties.",
+      "Place in air fryer until golden and cooked through."
+    ]
+  },
+  {
+    id: 35,
+    title: "Gravy",
+    tag: "Other · Sauce",
+    category: "Other",
+    preview: "Quick black pepper gravy",
+    ingredientGroups: [
+      { label: null, items: [
+        "Water",
+        "Corn starch",
+        "Black pepper",
+        "A little soy sauce"
+      ]}
+    ],
+    steps: [
+      "Combine water, corn starch, black pepper and a little soy sauce.",
+      "Bring to a boil while stirring until thickened."
+    ]
+  },
+  {
+    id: 36,
+    title: "Stir Fry Cauliflower",
+    tag: "Chinese · Vegetables",
+    category: "Chinese",
+    preview: "Simple stir-fried cauliflower with salt and cooking wine",
+    ingredientGroups: [
+      { label: null, items: [
+        "Cauliflower florets",
+        "Salt",
+        "Cooking wine",
+        "Oil"
+      ]}
+    ],
+    steps: [
+      "Heat oil in wok.",
+      "Add cauliflower and stir fry.",
+      "Add salt and a little cooking wine at the end.",
+      "Stir and serve."
+    ]
+  },
+  {
+    id: 37,
+    title: "Chicken Salad",
+    tag: "Other · Light",
+    category: "Other",
+    preview: "Boiled chicken with cucumber, cilantro and sweet chili",
+    ingredientGroups: [
+      { label: null, items: [
+        "Boiled chicken, shredded or sliced",
+        "Cucumber, sliced",
+        "Cilantro",
+        "Sweet chili sauce"
+      ]}
+    ],
+    steps: [
+      "Boil chicken until cooked, then shred or slice.",
+      "Combine with cucumber and cilantro.",
+      "Drizzle sweet chili sauce and serve."
+    ]
+  },
+  {
+    id: 38,
+    title: "Pad Kra Pow",
+    tag: "Other · Thai · Serves 2",
+    category: "Other",
+    preview: "Thai basil stir fry with ground chicken or beef",
+    ingredientGroups: [
+      { label: "Main", items: [
+        "1 lb ground chicken or beef",
+        "2 shallots (or ¼ small onion), thinly diced",
+        "2 tbsp minced garlic",
+        "3 Thai bird eye chili peppers, thinly diced",
+        "Cooking spray oil"
+      ]},
+      { label: "Sauce", items: [
+        "1 tbsp fish sauce",
+        "1 tbsp soy sauce",
+        "1 tbsp oyster sauce",
+        "2 tsp sugar",
+        "4 tbsp chicken bone broth",
+        "1 cup Thai basil"
+      ]}
+    ],
+    steps: [
+      "Thinly dice your shallots and chili peppers.",
+      "In a pan on medium heat coated with spray oil, add shallots, chili pieces and minced garlic. Cook until aromatic.",
+      "Add ground meat and cook until 75% done.",
+      "Add fish sauce, soy sauce, oyster sauce, sugar and chicken bone broth.",
+      "Add Thai basil and sauté until meat is cooked through."
+    ]
+  },
+  {
+    id: 40,
+    title: "Sourdough Bread",
+    tag: "Other · Baking",
+    category: "Other",
+    preview: "Homemade sourdough with cold ferment and Dutch oven bake",
+    ingredientGroups: [
+      { label: "Starter Feed (1–2 days before)", items: [
+        "10g starter",
+        "50g bread flour",
+        "50g water"
+      ]},
+      { label: "Dough", items: [
+        "100g active starter",
+        "350g warm water",
+        "500g bread flour",
+        "10g salt"
+      ]}
+    ],
+    steps: [
+      "1–2 days before baking, feed your starter at night: mix 10g starter, 50g bread flour, 50g water. It needs ~10 hours to double. It's ready when it has doubled in size with bubbles. Store your regular starter in the fridge when not in use.",
+      "Mix 100g active starter with 350g warm water, then add 500g bread flour. Mix thoroughly — work it well in the beginning for gluten development.",
+      "Let the dough rest for 1 hour.",
+      "Add 10g salt. Perform your first set of stretch and folds. Rest 30–40 minutes. Repeat for a total of 4 sets of stretch and folds (~2 hours total).",
+      "Let the dough bulk ferment until ready. Take the dough temperature right after the first stretch and fold and use the Dough Temping Guide below to estimate bulk ferment time. Alternatively, use the Aliquot Method — place a small amount of dough in a small clear container, mark the level, and when it rises to your target amount it's ready.",
+      "Once bulk ferment is done, turn dough out onto a surface. Fold in thirds, then roll to shape into a tight ball.",
+      "Place dough into a bowl lined with flour (banneton or a floured towel), seam side up. Cover and refrigerate for a cold ferment — anywhere from a few hours to overnight (longer = more sour flavor).",
+      "When ready to bake, preheat oven to 450°F with your Dutch oven inside so it preheats too.",
+      "Score the top of the dough, then carefully place it into the hot Dutch oven. Add a few ice cubes inside to create steam.",
+      "Bake with the lid on at 450°F for 25–30 minutes.",
+      "Remove the lid and reduce to 420°F. Bake for another 15–20 minutes until deep golden brown.",
+      "Check internal temperature — it should be over 200°F to be fully baked.",
+      "Remove from oven and cool on a wire rack for at least 1–2 hours before slicing."
+    ],
+    note: `Key tips: Use warm water for the dough. Score confidently and quickly. The cold ferment (fridge time) develops sour flavor — adjust to your taste. A Dutch oven is essential for the steam and crust.<br><br><strong>Maintaining your starter:</strong> Discard down to 50g of starter, then feed with 50g water and 50g flour. Leave it out at room temperature to rise. Once it has <em>doubled</em> in size, put it back in the fridge until next time.<br><br>
+<div style="margin-top:18px;">
+  <p style="font-size:0.65rem;letter-spacing:0.22em;text-transform:uppercase;color:#3d6b52;font-weight:500;padding-bottom:6px;border-bottom:1px solid #c2d4ca;margin-bottom:14px;">Reference Charts</p>
+  <div style="display:flex;flex-wrap:wrap;gap:20px;">
+    <div style="flex:1;min-width:200px;">
+      <p style="font-size:0.72rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#3d6b52;margin-bottom:8px;">Dough Temping Guide</p>
+      <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+        <thead>
+          <tr style="background:#3d6b52;color:white;">
+            <th style="padding:5px 8px;text-align:left;font-weight:400;letter-spacing:0.05em;">Dough Temp</th>
+            <th style="padding:5px 8px;text-align:left;font-weight:400;letter-spacing:0.05em;">Approx. Time</th>
+            <th style="padding:5px 8px;text-align:left;font-weight:400;letter-spacing:0.05em;">Target % Rise</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[
+            ['80F/27C','5.5 Hrs','30%'],['79F/26C','5.5 Hrs','30%'],['78F/25.5C','6 Hrs','40%'],
+            ['77F/25C','6 Hrs','40%'],['76F/24.5C','7 Hrs','50%'],['75F/24C','7 Hrs','50%'],
+            ['74F/23C','8 Hrs','55%'],['73F/22.5C','9 Hrs','60%'],['72F/22C','10 Hrs','65%'],
+            ['71F/21.5C','11 Hrs','70%'],['70F/21C','12 Hrs','75%'],['69F/20.5C','13 Hrs','80%'],
+            ['68F/20C','14 Hrs','85%'],['67F/19.5C','15 Hrs','90%'],['66F/19C','16 Hrs','95%'],
+            ['65F/18C','16+ Hrs','100%+']
+          ].map((r,i) => `<tr style="background:${i%2===0?'#faf9f6':'#eef3f0'}"><td style="padding:4px 8px;">${r[0]}</td><td style="padding:4px 8px;">${r[1]}</td><td style="padding:4px 8px;">${r[2]}</td></tr>`).join('')}
+        </tbody>
+      </table>
+      <p style="font-size:0.65rem;color:#7a9485;margin-top:4px;">Source: The Sourdough Journey © 2024</p>
+    </div>
+    <div style="flex:1;min-width:200px;">
+      <p style="font-size:0.72rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#3d6b52;margin-bottom:8px;">Aliquot Method — Dough Sample Size</p>
+      <p style="font-size:0.75rem;color:#7a9485;margin-bottom:8px;">Use a 2oz cup. Put the sample amount below in the cup, mark the level, and watch for the rise.</p>
+      <table style="width:100%;border-collapse:collapse;font-size:0.78rem;">
+        <thead>
+          <tr style="background:#3d6b52;color:white;">
+            <th style="padding:5px 8px;text-align:left;font-weight:400;letter-spacing:0.05em;">Dough Temp</th>
+            <th style="padding:5px 8px;text-align:left;font-weight:400;letter-spacing:0.05em;">% Rise</th>
+            <th style="padding:5px 8px;text-align:left;font-weight:400;letter-spacing:0.05em;">Sample Size</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${[
+            ['78–80F/27C','30%','43g'],['75F/24C','50%','37g'],['70F/21C','75%','32g'],['65F/18C','100%','28g']
+          ].map((r,i) => `<tr style="background:${i%2===0?'#faf9f6':'#eef3f0'}"><td style="padding:4px 8px;">${r[0]}</td><td style="padding:4px 8px;">${r[1]}</td><td style="padding:4px 8px;">${r[2]}</td></tr>`).join('')}
+        </tbody>
+      </table>
+      <p style="font-size:0.65rem;color:#7a9485;margin-top:4px;">Source: @crustycravingsbyhannah</p>
+    </div>
+  </div>
+</div>`
+  },
+  {
+    id: 41,
+    title: "Oatmeal Cookies",
+    tag: "Other · Baking",
+    category: "Other",
+    preview: "Soft oatmeal cookies — via AllRecipes",
+    ingredientGroups: [],
+    steps: [],
+    note: 'Recipe from AllRecipes: <a href="https://www.allrecipes.com/recipe/19247/soft-oatmeal-cookies/" target="_blank">Soft Oatmeal Cookies</a>'
+  }
+];
+
+// --- RENDER ---
+const grid = document.getElementById('grid');
+const overlay = document.getElementById('overlay');
+const modal = document.getElementById('modal');
+const closeBtn = document.getElementById('closeBtn');
+const searchInput = document.getElementById('search');
+const filterBtns = document.querySelectorAll('.filter-btn');
+const resultsCount = document.getElementById('resultsCount');
+
+let activeFilter = 'all';
+let searchTerm = '';
+
+function renderCards() {
+  const term = searchTerm.toLowerCase();
+  const filtered = recipes.filter(r => {
+    const matchesFilter = activeFilter === 'all' || r.category === activeFilter;
+    const matchesSearch = !term ||
+      r.title.toLowerCase().includes(term) ||
+      r.tag.toLowerCase().includes(term) ||
+      r.preview.toLowerCase().includes(term) ||
+      r.ingredientGroups.some(g => g.items.some(i => i.toLowerCase().includes(term)));
+    return matchesFilter && matchesSearch;
+  });
+
+  resultsCount.textContent = `${filtered.length} recipe${filtered.length !== 1 ? 's' : ''}`;
+
+  grid.innerHTML = '';
+  if (filtered.length === 0) {
+    grid.innerHTML = '<div class="no-results">No recipes found.</div>';
+    return;
+  }
+  filtered.forEach(r => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="card-tag">${r.tag}</div>
+      <div class="card-title">${r.title}</div>
+      <div class="card-preview">${r.preview}</div>
+      <span class="card-arrow">→</span>
+    `;
+    card.addEventListener('click', () => openModal(r));
+    grid.appendChild(card);
+  });
+}
+
+function openModal(r) {
+  document.getElementById('modalTag').textContent = r.tag;
+  document.getElementById('modalTitle').textContent = r.title;
+
+  let html = '';
+
+  // Ingredients
+  if (r.ingredientGroups && r.ingredientGroups.length > 0) {
+    html += `<p class="section-label">Ingredients</p>`;
+    r.ingredientGroups.forEach(g => {
+      if (g.label) html += `<p class="ingredient-group-label">${g.label}</p>`;
+      html += '<ul class="ingredients-list">';
+      g.items.forEach(i => { html += `<li>${i}</li>`; });
+      html += '</ul>';
+    });
+  }
+
+  // Steps
+  if (r.steps && r.steps.length > 0) {
+    html += `<p class="section-label">Instructions</p>`;
+    html += '<ol class="instructions-list">';
+    r.steps.forEach(s => { html += `<li>${s}</li>`; });
+    html += '</ol>';
+  }
+
+  // Note
+  if (r.note) {
+    html += `<div class="modal-note">${r.note}</div>`;
+  }
+
+  document.getElementById('modalBody').innerHTML = html;
+  overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+closeBtn.addEventListener('click', closeModal);
+overlay.addEventListener('click', e => { if (e.target === overlay) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    renderCards();
+  });
+});
+
+searchInput.addEventListener('input', e => {
+  searchTerm = e.target.value;
+  renderCards();
+});
+
+renderCards();
+</script>
+</body>
+</html>
