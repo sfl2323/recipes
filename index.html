@@ -327,6 +327,58 @@
   }
   .modal-note a { color: var(--green); }
 
+  .scaler {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 10px 0 0;
+  }
+  .scaler-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .scaler-controls {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 1.5px solid var(--green-mid);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .scaler-btn {
+    background: white;
+    border: none;
+    width: 32px;
+    height: 32px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s;
+  }
+  .scaler-btn:hover { background: var(--green-light); }
+  .scaler-val {
+    width: 36px;
+    text-align: center;
+    font-size: 0.88rem;
+    color: var(--text);
+    border-left: 1px solid var(--green-mid);
+    border-right: 1px solid var(--green-mid);
+    height: 32px;
+    line-height: 32px;
+    background: white;
+  }
+  .scaler-note {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
   .close-btn {
     position: absolute;
     top: 16px;
@@ -1668,22 +1720,90 @@ function renderCards() {
   });
 }
 
-function openModal(r) {
-  document.getElementById('modalTag').textContent = r.tag;
-  document.getElementById('modalTitle').textContent = r.title;
+// --- SERVING SCALER ---
+function parseAndScale(text, multiplier) {
+  // Match numbers including fractions like 1/2, 1¼, mixed like 1 1/2
+  return text.replace(/(\d+\s+\d+\/\d+|\d+\/\d+|[\d]*[¼½¾⅓⅔⅛⅜⅝⅞]|\d+\.?\d*)/g, (match, offset, str) => {
+    // Convert fraction words
+    const fractionMap = {'¼':0.25,'½':0.5,'¾':0.75,'⅓':0.333,'⅔':0.667,'⅛':0.125,'⅜':0.375,'⅝':0.625,'⅞':0.875};
+    let val;
+    if (fractionMap[match]) {
+      val = fractionMap[match];
+    } else if (match.includes('/')) {
+      const parts = match.trim().split(/\s+/);
+      if (parts.length === 2) {
+        const [whole] = parts;
+        const [n, d] = parts[1].split('/');
+        val = parseFloat(whole) + parseFloat(n)/parseFloat(d);
+      } else {
+        const [n, d] = match.split('/');
+        val = parseFloat(n)/parseFloat(d);
+      }
+    } else {
+      val = parseFloat(match);
+    }
+    const scaled = val * multiplier;
+    // Format nicely
+    if (Number.isInteger(scaled)) return scaled.toString();
+    // Try to express as simple fraction
+    const fracs = [[1,4,'¼'],[1,2,'½'],[3,4,'¾'],[1,3,'⅓'],[2,3,'⅔'],[1,8,'⅛'],[3,8,'⅜'],[5,8,'⅝'],[7,8,'⅞']];
+    for (const [n,d,sym] of fracs) {
+      if (Math.abs(scaled - n/d) < 0.02) return sym;
+      if (scaled > 1) {
+        const whole = Math.floor(scaled);
+        const rem = scaled - whole;
+        if (Math.abs(rem - n/d) < 0.02) return `${whole}${sym}`;
+      }
+    }
+    return parseFloat(scaled.toFixed(1)).toString();
+  });
+}
 
+let currentRecipe = null;
+let currentMultiplier = 1;
+let baseServings = 1;
+
+function renderIngredients() {
+  const r = currentRecipe;
   let html = '';
-
-  // Ingredients
   if (r.ingredientGroups && r.ingredientGroups.length > 0) {
     html += `<p class="section-label">Ingredients</p>`;
     r.ingredientGroups.forEach(g => {
       if (g.label) html += `<p class="ingredient-group-label">${g.label}</p>`;
       html += '<ul class="ingredients-list">';
-      g.items.forEach(i => { html += `<li>${i}</li>`; });
+      g.items.forEach(i => {
+        const scaled = currentMultiplier === 1 ? i : parseAndScale(i, currentMultiplier);
+        html += `<li>${scaled}</li>`;
+      });
       html += '</ul>';
     });
   }
+  document.getElementById('ingredientsSection').innerHTML = html;
+  document.getElementById('scalerVal').textContent = `${baseServings * currentMultiplier}x`;
+}
+
+function openModal(r) {
+  currentRecipe = r;
+  currentMultiplier = 1;
+  baseServings = 1;
+
+  document.getElementById('modalTag').textContent = r.tag;
+  document.getElementById('modalTitle').textContent = r.title;
+
+  // Scaler
+  const scalerHTML = `
+    <div class="scaler">
+      <span class="scaler-label">Servings</span>
+      <div class="scaler-controls">
+        <button class="scaler-btn" id="scalerDown">−</button>
+        <div class="scaler-val" id="scalerVal">1x</div>
+        <button class="scaler-btn" id="scalerUp">+</button>
+      </div>
+      <span class="scaler-note">tap to scale ingredients</span>
+    </div>`;
+
+  let html = scalerHTML;
+  html += `<div id="ingredientsSection"></div>`;
 
   // Steps
   if (r.steps && r.steps.length > 0) {
@@ -1699,6 +1819,17 @@ function openModal(r) {
   }
 
   document.getElementById('modalBody').innerHTML = html;
+
+  document.getElementById('scalerUp').addEventListener('click', () => {
+    currentMultiplier = Math.min(currentMultiplier + 1, 10);
+    renderIngredients();
+  });
+  document.getElementById('scalerDown').addEventListener('click', () => {
+    currentMultiplier = Math.max(currentMultiplier - 1, 1);
+    renderIngredients();
+  });
+
+  renderIngredients();
   overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
